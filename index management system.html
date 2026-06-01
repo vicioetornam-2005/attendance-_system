@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance Management System</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="#">
+          <span class="brand__mark" aria-hidden="true">🧾</span>
+          <span class="brand__name">
+            <strong>Attendance</strong>
+            <span>Colorful Management System</span>
+          </span>
+        </a>
+
+        <div class="topbar__right" style="display:flex; gap:12px; align-items:center;">
+          <span class="kbd" id="appHint">Save & Load (localStorage)</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="hero" aria-label="Attendance header">
+        <div class="hero__grid">
+          <div class="heroCard">
+            <h1 style="margin-top:0;">Track attendance in seconds</h1>
+            <p>Select a date, then mark each student as <b>Present</b> or <b>Absent</b>. Everything is saved on this browser.</p>
+            <div class="badges" aria-label="Highlights">
+              <span class="badge">🟢 Present counts</span>
+              <span class="badge">🔴 Absent counts</span>
+              <span class="badge">🟡 Pending auto</span>
+            </div>
+          </div>
+
+          <div class="quickStats">
+            <div class="stat">
+              <div class="stat__label">Present</div>
+              <div class="stat__value" style="color:rgba(25,211,122,.95)">
+                <span aria-hidden="true">▲</span> <span id="summaryPresent">0</span>
+              </div>
+            </div>
+            <div class="stat">
+              <div class="stat__label">Absent</div>
+              <div class="stat__value" style="color:rgba(255,77,109,.95)">
+                <span aria-hidden="true">▼</span> <span id="summaryAbsent">0</span>
+              </div>
+            </div>
+            <div class="stat">
+              <div class="stat__label">Pending</div>
+              <div class="stat__value" style="color:rgba(234,240,255,.9)">
+                <span aria-hidden="true">•</span> <span id="summaryPending">0</span>
+              </div>
+            </div>
+            <div class="stat">
+              <div class="stat__label">Students</div>
+              <div class="stat__value">
+                <span id="summaryTotal">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid" aria-label="Attendance management">
+        <!-- Left: Students + controls -->
+        <div class="card">
+          <div class="card__header">
+            <h2>Students</h2>
+            <span class="pill" id="selectedDatePill">Date</span>
+          </div>
+          <div class="card__body">
+            <div class="fieldRow" style="margin-bottom:12px;">
+              <div class="field" style="flex:1; min-width: 190px;">
+                <label for="dateInput">Date</label>
+                <input id="dateInput" type="date" />
+              </div>
+              <div class="field" style="min-width: 180px; flex:0.7;">
+                <label for="classSelect">Class</label>
+                <select id="classSelect">
+                  <option>Class A</option>
+                  <option>Class B</option>
+                  <option>Class C</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="studentsList" id="studentsList" aria-live="polite"></div>
+
+            <div class="card" style="margin-top:14px; background: rgba(255,255,255,.03); box-shadow:none;">
+              <div class="card__header">
+                <h2>Add student</h2>
+                <span class="pill">Auto-pending</span>
+              </div>
+              <div class="card__body">
+                <div class="fieldRow">
+                  <div class="field">
+                    <label for="addStudentName">Name</label>
+                    <input id="addStudentName" placeholder="e.g. Ama" autocomplete="off" />
+                  </div>
+                  <div class="field">
+                    <label for="addStudentId">Student ID</label>
+                    <input id="addStudentId" placeholder="e.g. S001" autocomplete="off" />
+                  </div>
+                </div>
+                <div class="btnRow">
+                  <button id="addStudentBtn" class="btn btnPrimary" type="button">➕ Add</button>
+                  <button id="resetDayBtn" class="btn btnGhost" type="button" title="Remove saved attendance for the selected day">Reset day</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Data actions -->
+        <div class="card">
+          <div class="card__header">
+            <h2>Attendance Table</h2>
+            <div class="rowActions">
+              <button id="saveBtn" class="btn btnPrimary" type="button">💾 Save</button>
+              <button id="loadBtn" class="btn" type="button">📂 Load</button>
+              <button id="clearAllBtn" class="btn btnDanger" type="button">🧹 Clear</button>
+            </div>
+          </div>
+
+          <div class="card__body">
+            <div class="tableWrap">
+              <table class="table" aria-label="Attendance summary by student">
+                <thead>
+                  <tr>
+                    <th style="width: 50%;">Student</th>
+                    <th style="width: 25%;">Status</th>
+                    <th style="width: 25%;">Quick actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody">
+                  <!-- filled by JS (shares same data as the left cards) -->
+                </tbody>
+              </table>
+            </div>
+
+            <div style="margin-top:14px;">
+              <div class="fieldRow" style="align-items:stretch;">
+                <div class="field" style="min-width: 200px;">
+                  <label>Tips</label>
+                  <div style="color:var(--muted); font-size:13px; line-height:1.4">
+                    Pending (🟡) means not marked yet.
+                    <br />Reset day removes saved marks for the selected date.
+                  </div>
+                </div>
+                <div class="field" style="min-width: 200px;">
+                  <label>Export</label>
+                  <button
+                    id="exportBtn"
+                    class="btn"
+                    type="button"
+                    style="width:100%; border-radius:14px;"
+                  >
+                    📤 Export JSON
+                  </button>
+                  <textarea
+                    id="exportArea"
+                    placeholder="Exported data will appear here..."
+                    style="margin-top:10px;"
+                    rows="5"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <span class="muted">© <span id="year"></span> Attendance Management System</span>
+      </div>
+    </footer>
+
+    <div id="toast" class="toast" role="status" aria-live="polite">
+      <strong id="toastText">Saved</strong>
+      <span class="muted">Local changes are stored in your browser.</span>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
+
